@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ultra96 Traffic Sign Demo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, sans-serif;
+      background: #f3f6fa;
+      color: #172033;
+    }
+    * { box-sizing: border-box; }
+    body {
+      width: 100%;
+      margin: 0;
+      padding: 1.5rem clamp(1rem, 2.5vw, 2.5rem);
+    }
+    main {
+      width: 100%;
+      padding: clamp(1rem, 3vw, 2rem);
+      background: white;
+      border: 1px solid #dce3ed;
+      border-radius: 12px;
+      box-shadow: 0 8px 28px #17203312;
+    }
+    h1 { margin-top: 0; }
+    form {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) minmax(160px, 220px) auto;
+      gap: 1rem;
+      align-items: end;
+      padding: 1rem;
+      background: #f7f9fc;
+      border: 1px solid #e1e7f0;
+      border-radius: 8px;
+    }
+    label { display: grid; gap: 0.4rem; font-weight: 600; }
+    input, button {
+      min-height: 2.6rem;
+      padding: 0.5rem 0.7rem;
+      font: inherit;
+    }
+    input { width: 100%; border: 1px solid #c8d1df; border-radius: 6px; }
+    button {
+      color: white;
+      background: #185abd;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.6; cursor: wait; }
+    #status { min-height: 1.5rem; margin: 1rem 0; }
+    #result-section { margin-top: 2rem; }
+    .result-layout {
+      display: grid;
+      grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+      gap: 1.25rem;
+      align-items: start;
+    }
+    .result-info, .image-panel {
+      min-width: 0;
+      padding: 1rem;
+      border: 1px solid #dce3ed;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .summary {
+      margin-top: 0;
+      padding: 0.8rem;
+      border-radius: 6px;
+      background: #edf4ff;
+      font-weight: 700;
+    }
+    .image-panel { margin: 0; background: #f7f9fc; }
+    .image-panel figcaption { margin-bottom: 0.75rem; font-weight: 700; }
+    #result-image {
+      display: block;
+      width: 100%;
+      max-height: 72vh;
+      object-fit: contain;
+      background: #172033;
+      border-radius: 6px;
+    }
+    #timings { white-space: pre-line; }
+    .note { color: #4a5568; font-size: 0.95rem; }
+    @media (max-width: 720px) {
+      body { padding: 1rem 0.5rem; }
+      form, .result-layout { grid-template-columns: 1fr; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Ultra96 Traffic Sign Demo</h1>
+    <p>Upload an image to detect signs and classify each detected crop.</p>
+    <form id="upload-form">
+      <label>
+        Image (JPEG or PNG, up to 8 MB)
+        <input id="image-file" type="file" accept="image/jpeg,image/png" required>
+      </label>
+      <label>
+        Confidence threshold
+        <input id="confidence" type="number" min="0" max="1" step="0.001" value="0.01" required>
+      </label>
+      <button id="submit-button" type="submit">Run inference</button>
+    </form>
+    <p class="note">The default threshold is 0.01. Lower values can increase false detections.</p>
+    <p id="status" role="status"></p>
+    <section id="result-section" hidden>
+      <h2>Result</h2>
+      <div class="result-layout">
+        <div class="result-info">
+          <p id="summary" class="summary"></p>
+          <h3>Inference timing</h3>
+          <p id="timings" class="note"></p>
+        </div>
+        <figure class="image-panel">
+          <figcaption>Annotated image</figcaption>
+          <img id="result-image" alt="Annotated inference result">
+        </figure>
+      </div>
+    </section>
+  </main>
+  <script>
+    const form = document.getElementById("upload-form");
+    const fileInput = document.getElementById("image-file");
+    const confidenceInput = document.getElementById("confidence");
+    const submitButton = document.getElementById("submit-button");
+    const status = document.getElementById("status");
+    const resultSection = document.getElementById("result-section");
+    const summary = document.getElementById("summary");
+    const timings = document.getElementById("timings");
+    const resultImage = document.getElementById("result-image");
+    const maxFileBytes = 8 * 1024 * 1024;
+
+    function readAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("Could not read the selected image."));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const file = fileInput.files[0];
+      if (!file) return;
+      if (file.size > maxFileBytes) {
+        status.textContent = "The selected image is larger than 8 MB.";
+        return;
+      }
+
+      submitButton.disabled = true;
+      status.textContent = "Uploading image and running inference...";
+      resultSection.hidden = true;
+      try {
+        const image = await readAsDataUrl(file);
+        const response = await fetch("/infer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image,
+            confidence: Number(confidenceInput.value)
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Inference request failed.");
+
+        resultImage.src = result.annotated_image;
+        summary.textContent = `Detected signs: ${result.detections} (confidence ${result.confidence})`;
+        timings.textContent =
+          `Detector: ${result.timings_ms.detector} ms\n` +
+          `Classification and annotation: ${result.timings_ms.classification_and_annotation} ms\n` +
+          `Total inference: ${result.timings_ms.inference_total} ms\n` +
+          `Result image encoding: ${result.timings_ms.image_encoding} ms\n` +
+          "Inference timing excludes model startup and network transfer.";
+        resultSection.hidden = false;
+        status.textContent = "Done.";
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

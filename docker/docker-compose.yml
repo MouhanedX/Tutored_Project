@@ -1,0 +1,32 @@
+# GPU needs the NVIDIA Container Toolkit (already works with Docker Desktop + WSL2).
+#   docker compose run --rm train
+#   docker compose run --rm evaluate
+#   docker compose run --rm predict data/gtsrb/Test/00000.png
+x-common: &common
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  image: gtsrb-cnn:latest
+  shm_size: "4gb"                      # DataLoader workers share batches through /dev/shm
+  volumes:
+    - ${GTSRB_DATA_DIR:-../../GTSRB}:/app/data/gtsrb:ro
+    - ../outputs:/app/outputs
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+
+services:
+  train:
+    <<: *common
+    entrypoint: ["python", "train.py"]
+  evaluate:
+    <<: *common
+    entrypoint: ["python", "evaluate.py"]
+  predict:
+    <<: *common
+    entrypoint: ["python", "predict.py"]
+

@@ -1,0 +1,8 @@
+{
+    "lib": "libvart-dpu-runner.so",
+    "filename": "TrafficSignCNN.xmodel",
+    "kernel": [
+        "subgraph_TrafficSignCNN__TrafficSignCNN_AvgPool2d_pool__1259_i0"
+    ],
+    "target": "DPUCZDX8G_ISA1_B1600"
+}

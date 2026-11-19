@@ -1,0 +1,72 @@
+{
+  "classifier": {
+    "model": "TrafficSignCNN",
+    "dataset": "GTSRB",
+    "classes": 43,
+    "board": "Ultra96-V2",
+    "runtime": "PYNQ-DPU 2.5.1",
+    "target": "DPUCZDXX8G_ISA1_B1600",
+    "board_test_accuracy": 99.44,
+    "board_test_correct": 12559,
+    "board_test_total": 12630,
+    "pc_cpu_baseline_accuracy": 99.43,
+    "board_dpu_inference_ms": 1.14,
+    "board_preprocessing_ms": 2.31,
+    "board_total_ms": 3.46,
+    "input_shape": [1, 48, 48, 3],
+    "input_fix_point": 5,
+    "output_shape": [1, 43],
+    "output_fix_point": 4
+  },
+  "detector": {
+    "model": "YOLOv8n-derived C3-SiLU",
+    "dataset": "GTSDB",
+    "classes": 1,
+    "class_name": "sign",
+    "board": "Ultra96-V2",
+    "runtime": "PYNQ-DPU 2.5.1 with NumPy CPU fallback",
+    "target": "DPUCZDX8G_ISA1_B1600",
+    "board_test_mAP50": 0.7440,
+    "board_test_mAP50_95": 0.4915,
+    "board_test_precision": 0.9025,
+    "board_test_recall": 0.5623,
+    "board_test_f1": 0.6929,
+    "board_test_confidence_for_max_f1": 0.068,
+    "board_test_images": 300,
+    "board_test_ground_truth_signs": 361,
+    "board_test_images_without_labels": 65,
+    "board_preprocess_ms": 45.76,
+    "board_graph_schedule_ms": 1742.52,
+    "board_decode_nms_ms": 83.18,
+    "board_total_ms": 1871.46,
+    "board_fps": 0.53,
+    "input_shape": [1, 640, 640, 3],
+    "output_shapes": [[1, 40, 40, 65], [1, 80, 80, 65], [1, 20, 20, 65]],
+    "dpu_partitions": 55,
+    "cpu_partitions": 68
+  },
+  "combined_demo_smoke_test": {
+    "image": "GTSDB test image 00601.jpg",
+    "detections": 1,
+    "detector_setup_ms": 1855.21,
+    "detector_inference_ms": 1953.79,
+    "classifier_inference_ms": 27.73,
+    "combined_inference_ms": 1981.52,
+    "first_run_including_setup_ms": 3836.73,
+    "scope": "single-image smoke test; not a sustained throughput benchmark"
+  },
+  "imx_image_smoke_test": {
+    "image": "imx.png",
+    "detector_confidence_threshold": 0.068,
+    "detections": 1,
+    "classified_crop": {
+      "class_id": 18,
+      "class_name": "General caution"
+    },
+    "detector_setup_ms": 2136.96,
+    "detector_inference_ms": 1952.13,
+    "classifier_inference_ms": 12.99,
+    "combined_inference_ms": 1965.12,
+    "scope": "single-image smoke test; not a sustained throughput benchmark"
+  }
+}

@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Local environments and editor files
+.venv/
+venv/
+.env
+.vscode/
+
+# Training outputs, checkpoints, and generated intermediates
+/outputs/*
+*.pt
+*.pt2
+*.npz
+*.onnx
+*.onnx.data
+*.log
+core
+core.*
+
+# Datasets and local inference results
+/data/
+/datasets/
+annotated*.jpg
+annotated*.png
+
+# OS metadata
+Thumbs.db
+.DS_Store
